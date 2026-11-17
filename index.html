@@ -1,0 +1,706 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>Reframe</title>
+  <meta name="description" content="Reframe: turn a harsh thought into kind words, then relax to a quiet binaural session. Runs entirely in your browser." />
+  <meta name="theme-color" content="#0f1410" />
+  <style>
+    :root {
+      --bg: #0f1410;
+      --fg: #e8efe6;
+      --muted: #9aab96;
+      --accent: #8fbc8f;
+      --card: rgba(232, 239, 230, 0.04);
+      --line: rgba(143, 188, 143, 0.22);
+      --warm: #e6c79a;
+    }
+    * { box-sizing: border-box; }
+    html { -webkit-text-size-adjust: 100%; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: "Segoe UI", system-ui, -apple-system, sans-serif;
+      background:
+        radial-gradient(ellipse at 20% 0%, #1c2a1c 0%, transparent 50%),
+        radial-gradient(ellipse at 90% 80%, #1a1f2a 0%, transparent 45%),
+        var(--bg);
+      background-attachment: fixed;
+      color: var(--fg);
+      line-height: 1.55;
+      padding: max(2rem, env(safe-area-inset-top)) 1.25rem max(3rem, env(safe-area-inset-bottom));
+    }
+    main { width: min(38rem, 100%); margin: 0 auto; }
+    a { color: var(--accent); }
+    .back { display: inline-block; font-size: 0.85rem; color: var(--muted); text-decoration: none; margin-bottom: 1.5rem; }
+    .back:hover, .back:focus-visible { color: var(--accent); }
+    header { text-align: center; margin-bottom: 2rem; }
+    .eyebrow { color: var(--accent); font-size: 0.8rem; letter-spacing: 0.14em; text-transform: uppercase; margin: 0 0 0.75rem; }
+    h1 { margin: 0 0 0.75rem; font-size: clamp(2rem, 6vw, 2.8rem); font-weight: 650; letter-spacing: -0.02em; }
+    h2 { font-size: 1.15rem; font-weight: 620; margin: 0 0 0.5rem; letter-spacing: -0.01em; }
+    p { margin: 0 0 0.75rem; color: var(--muted); }
+    header p { font-size: 1.08rem; }
+    .card {
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      padding: 1.25rem 1.25rem 1.1rem;
+      margin: 0 0 1.25rem;
+    }
+    .step { color: var(--accent); font-size: 0.75rem; letter-spacing: 0.12em; text-transform: uppercase; margin: 0 0 0.35rem; }
+    label { display: block; font-size: 0.92rem; color: var(--fg); margin: 0 0 0.4rem; }
+    textarea, input[type="text"] {
+      width: 100%;
+      font: inherit;
+      font-size: 16px; /* keeps iOS from zooming */
+      color: var(--fg);
+      background: rgba(0, 0, 0, 0.28);
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 0.7rem 0.85rem;
+    }
+    textarea { min-height: 7rem; resize: vertical; }
+    textarea:focus, input[type="text"]:focus { outline: 2px solid var(--accent); outline-offset: 1px; border-color: transparent; }
+    .hint { font-size: 0.85rem; margin-top: 0.45rem; }
+    .btn {
+      display: inline-flex; align-items: center; justify-content: center; gap: 0.4rem;
+      min-height: 44px;
+      padding: 0.65rem 1.3rem;
+      color: var(--bg);
+      background: var(--accent);
+      border: none;
+      border-radius: 999px;
+      font: inherit; font-size: 0.95rem; font-weight: 600;
+      letter-spacing: 0.01em;
+      cursor: pointer;
+      box-shadow: 0 0 0 1px rgba(143, 188, 143, 0.35), 0 8px 24px rgba(0, 0, 0, 0.35);
+      transition: transform 0.15s ease, filter 0.15s ease;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .btn:hover, .btn:focus-visible { filter: brightness(1.08); transform: translateY(-1px); }
+    .btn:focus-visible, .ghost:focus-visible, .x:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+    .btn[disabled] { opacity: 0.45; cursor: not-allowed; transform: none; }
+    .ghost {
+      display: inline-flex; align-items: center; justify-content: center;
+      min-height: 44px;
+      padding: 0.6rem 1.1rem;
+      color: var(--fg);
+      background: transparent;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      font: inherit; font-size: 0.92rem;
+      cursor: pointer;
+    }
+    .ghost:hover { border-color: var(--accent); }
+    .ghost[disabled] { opacity: 0.45; cursor: not-allowed; }
+    .row { display: flex; flex-wrap: wrap; gap: 0.6rem; align-items: center; margin-top: 0.9rem; }
+    .safety {
+      border: 1px solid rgba(230, 199, 154, 0.5);
+      background: rgba(230, 199, 154, 0.08);
+      border-radius: 18px;
+      padding: 1.1rem 1.25rem;
+      margin: 0 0 1.25rem;
+    }
+    .safety h2 { color: var(--warm); }
+    .safety p { color: var(--fg); margin: 0 0 0.6rem; }
+    .safety .row { margin-top: 0.4rem; }
+    .safety a.btn { text-decoration: none; background: var(--warm); }
+    .safety .small { color: var(--muted); font-size: 0.85rem; margin: 0.7rem 0 0; }
+    ul.affs { list-style: none; padding: 0; margin: 0.4rem 0 0; }
+    ul.affs li { display: flex; gap: 0.5rem; align-items: center; margin: 0 0 0.5rem; }
+    ul.affs input { flex: 1; }
+    .x {
+      flex: none; width: 44px; height: 44px;
+      border-radius: 999px;
+      border: 1px solid var(--line);
+      background: transparent; color: var(--muted);
+      font-size: 1.25rem; line-height: 1; cursor: pointer;
+    }
+    .x:hover { color: var(--fg); border-color: var(--accent); }
+    .from { font-size: 0.85rem; margin: 0.2rem 0 0.6rem; }
+    .from q { color: var(--fg); }
+    fieldset { border: none; padding: 0; margin: 0 0 1rem; }
+    legend { font-size: 0.92rem; color: var(--fg); margin-bottom: 0.45rem; padding: 0; }
+    .chips { display: flex; flex-wrap: wrap; gap: 0.45rem; }
+    .chips input { position: absolute; opacity: 0; pointer-events: none; }
+    .chips label {
+      margin: 0;
+      min-height: 40px;
+      display: inline-flex; align-items: center;
+      padding: 0.45rem 0.95rem;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      color: var(--muted);
+      font-size: 0.9rem;
+      cursor: pointer;
+    }
+    .chips input:checked + label { color: var(--bg); background: var(--accent); border-color: var(--accent); font-weight: 600; }
+    .chips input:focus-visible + label { outline: 2px solid var(--accent); outline-offset: 2px; }
+    .slider { margin: 0 0 1rem; }
+    .slider .top { display: flex; justify-content: space-between; font-size: 0.92rem; }
+    .slider output { color: var(--muted); font-variant-numeric: tabular-nums; }
+    input[type="range"] { width: 100%; accent-color: var(--accent); min-height: 32px; }
+    .switch { display: flex; align-items: center; gap: 0.6rem; font-size: 0.92rem; margin: 0 0 1rem; cursor: pointer; }
+    .switch input { width: 1.2rem; height: 1.2rem; accent-color: var(--accent); }
+    .status {
+      display: flex; align-items: center; justify-content: space-between; gap: 1rem;
+      margin-top: 1rem; padding: 0.8rem 1rem;
+      border-radius: 14px; background: rgba(0, 0, 0, 0.25);
+      font-variant-numeric: tabular-nums;
+    }
+    .status .now { font-size: 0.9rem; color: var(--muted); min-height: 1.4em; }
+    .status .time { font-size: 1.25rem; color: var(--fg); }
+    .bar { height: 4px; border-radius: 4px; background: rgba(143, 188, 143, 0.15); overflow: hidden; margin-top: 0.6rem; }
+    .bar > div { height: 100%; width: 0; background: var(--accent); transition: width 0.5s linear; }
+    .note { font-size: 0.88rem; }
+    details { margin-top: 0.5rem; }
+    summary { cursor: pointer; color: var(--fg); font-size: 0.95rem; padding: 0.35rem 0; }
+    details p { font-size: 0.92rem; }
+    footer { margin-top: 2rem; text-align: center; font-size: 0.85rem; color: var(--muted); }
+    footer p { margin: 0 0 0.35rem; font-size: 0.85rem; }
+    .sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+    [hidden] { display: none !important; }
+    @media (prefers-reduced-motion: reduce) {
+      .btn, .bar > div { transition: none; }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <a class="back" href="https://farfuturesolutions.com/">&larr; Far Future Solutions</a>
+    <header>
+      <p class="eyebrow">A quiet tool</p>
+      <h1>Reframe</h1>
+      <p>Write down a harsh thought. Get kinder words back. Then rest with them for a while.</p>
+    </header>
+
+    <section class="card" aria-labelledby="s1">
+      <p class="step">Step 1</p>
+      <h2 id="s1">What is the voice in your head saying?</h2>
+      <label for="thoughts" class="sr">Your thoughts, one per line</label>
+      <textarea id="thoughts" placeholder="One per line, for example:&#10;I'm not good enough&#10;Nobody cares about me&#10;I always mess things up"></textarea>
+      <p class="hint">Everything you type stays on this device. Nothing is sent anywhere or saved.</p>
+      <div class="row">
+        <button class="btn" id="reframeBtn" type="button">Reframe</button>
+        <button class="ghost" id="clearBtn" type="button">Clear</button>
+      </div>
+    </section>
+
+    <section class="safety" id="safety" role="note" aria-live="polite" hidden>
+      <h2>You're not alone.</h2>
+      <p>If you're thinking about ending your life, you can call or text <strong>988</strong> (Suicide &amp; Crisis Lifeline, US) any time, or find a line in your country at <a href="https://findahelpline.com" target="_blank" rel="noopener noreferrer">findahelpline.com</a>.</p>
+      <div class="row">
+        <a class="btn" href="tel:988">Call 988</a>
+        <a class="ghost" href="sms:988">Text 988</a>
+      </div>
+      <p class="small">You can keep going below whenever you're ready.</p>
+    </section>
+
+    <section class="card" id="results" aria-labelledby="s2" hidden>
+      <p class="step">Step 2</p>
+      <h2 id="s2">Kinder words</h2>
+      <p class="note">Change anything that doesn't sound right to you. Short, present-tense lines work best.</p>
+      <div id="sources"></div>
+      <ul class="affs" id="affList"></ul>
+      <div class="row">
+        <button class="ghost" id="addBtn" type="button">+ Add a line</button>
+      </div>
+    </section>
+
+    <section class="card" aria-labelledby="s3">
+      <p class="step">Step 3</p>
+      <h2 id="s3">Listen</h2>
+      <p class="note"><strong>Use headphones.</strong> Each ear gets a slightly different tone, and your brain hears the difference as a slow, gentle pulse. It doesn't work through speakers. Sit or lie down, close your eyes, and keep the volume low.</p>
+
+      <fieldset>
+        <legend>Pulse</legend>
+        <div class="chips">
+          <input type="radio" name="beat" id="b4" value="4" checked><label for="b4">Theta 4 Hz &middot; deep rest</label>
+          <input type="radio" name="beat" id="b6" value="6"><label for="b6">Theta 6 Hz &middot; calm</label>
+          <input type="radio" name="beat" id="b10" value="10"><label for="b10">Alpha 10 Hz &middot; quiet focus</label>
+        </div>
+      </fieldset>
+
+      <fieldset>
+        <legend>Length</legend>
+        <div class="chips">
+          <input type="radio" name="len" id="l10" value="10"><label for="l10">10 min</label>
+          <input type="radio" name="len" id="l15" value="15"><label for="l15">15 min</label>
+          <input type="radio" name="len" id="l20" value="20" checked><label for="l20">20 min</label>
+        </div>
+      </fieldset>
+
+      <div class="slider">
+        <div class="top"><label for="vol">Volume</label><output id="volOut" for="vol">40%</output></div>
+        <input type="range" id="vol" min="0" max="100" value="40">
+      </div>
+      <div class="slider">
+        <div class="top"><label for="bed">Rain-like noise</label><output id="bedOut" for="bed">60%</output></div>
+        <input type="range" id="bed" min="0" max="100" value="60">
+      </div>
+
+      <label class="switch"><input type="checkbox" id="wordsOn" checked> Play my kind words underneath</label>
+      <fieldset id="wordsOpts">
+        <legend>Voice</legend>
+        <div class="chips">
+          <input type="radio" name="mode" id="mWhisper" value="whisper" checked><label for="mWhisper">Whisper (quiet)</label>
+          <input type="radio" name="mode" id="mAudible" value="audible"><label for="mAudible">Audible</label>
+        </div>
+        <div class="slider" style="margin-top:0.8rem">
+          <div class="top"><label for="voiceVol">Voice level</label><output id="voiceOut" for="voiceVol">12%</output></div>
+          <input type="range" id="voiceVol" min="1" max="100" value="12">
+        </div>
+      </fieldset>
+
+      <div class="row">
+        <button class="btn" id="playBtn" type="button">&#9654; Start session</button>
+        <button class="ghost" id="pauseBtn" type="button" disabled>Pause</button>
+        <button class="ghost" id="stopBtn" type="button" disabled>Stop</button>
+      </div>
+      <div class="status" aria-live="polite">
+        <span class="now" id="nowSaying">Ready when you are.</span>
+        <span class="time" id="timeLeft">20:00</span>
+      </div>
+      <div class="bar" aria-hidden="true"><div id="progress"></div></div>
+
+      <details>
+        <summary>How the quiet words work</summary>
+        <p>Your device's built-in voice reads your kind words one at a time, with a pause between each, looping for the whole session. In <em>Whisper</em> mode it speaks very quietly under the tones and noise, so you may barely notice it. <em>Audible</em> lets you hear the words clearly. The voice level slider fine-tunes either one.</p>
+        <p>To be honest about it: the evidence that "subliminal" audio changes how people think is limited. What clearly helps is relaxing your body and hearing kind, specific words often. Many people get more from Audible mode, or from saying the words out loud themselves.</p>
+        <p>Some browsers, including Safari on iPhone and iPad, ignore the voice level setting and always speak at normal volume. If the words are louder than you want, lower the main volume, switch the words off, or read them silently instead.</p>
+        <p>The voice comes from your device, so nothing you wrote is sent anywhere.</p>
+      </details>
+      <details>
+        <summary>Tips</summary>
+        <p>Try one session a day for a couple of weeks, at about the same time, such as after exercise or before bed. On a phone, keep the screen on and the page open, and turn off silent mode if you hear nothing.</p>
+      </details>
+    </section>
+
+    <section class="card" aria-labelledby="s4">
+      <h2 id="s4">Save the sound for later</h2>
+      <p class="note">Make a WAV file of the tones and noise to play offline. Your browser can't record its own voice, so the file won't include the spoken words. It's about 5 MB per minute.</p>
+      <div class="row">
+        <button class="ghost" id="dlBtn" type="button">Download session (WAV)</button>
+        <span class="note" id="dlStatus" aria-live="polite"></span>
+      </div>
+    </section>
+
+    <footer>
+      <p>This is a relaxation tool, not medical or mental-health care.</p>
+      <p>Don't use while driving or doing anything that needs your attention. If you have epilepsy or a seizure disorder, check with a doctor before using pulsing audio.</p>
+      <p>Nothing you type leaves your browser. No tracking, no accounts.</p>
+      <p>2026 &copy; Far Future Solutions LLC</p>
+    </footer>
+  </main>
+
+  <script>
+/* Reframe core: offline, rule-based. Nothing leaves the browser. */
+var ReframeCore = (function () {
+  var CRISIS = [
+    /\bkill(ing)?\s+my\s*self\b/, /\bkms\b/, /\bsuicid/, /\bwant(s|ed)?\s+to\s+die\b/,
+    /\bwish\s+i\s+(was|were)\s+dead\b/, /\bwish\s+i\s+(had\s+)?never\s+(been\s+born|existed)\b/,
+    /\bend\s+(it\s+all|it|my\s+life|things)\b/, /\bshould(n'?t| not)\s+(exist|be\s+alive|be\s+here)\b/,
+    /\bbetter\s+off\s+(dead|without\s+me)\b/, /\bhurt(ing)?\s+my\s*self\b/, /\bharm(ing)?\s+my\s*self\b/,
+    /\bself[-\s]?harm/, /\bcut(ting)?\s+my\s*self\b/, /\bdon'?t\s+want\s+to\s+(live|be\s+alive|be\s+here|wake\s+up)\b/,
+    /\bno\s+reason\s+to\s+live\b/, /\btake\s+my\s+(own\s+)?life\b/, /\bshould\s+(just\s+)?die\b/,
+    /\bnot\s+worth\s+living\b/, /\bdisappear\s+forever\b/
+  ];
+  var THEMES = [
+    { id: "life", re: [/\bkill(ing)?\s+my\s*self\b/, /\bsuicid/, /\bdie\b/, /\bdead\b/, /\bend\s+(it|my\s+life)/, /\bhurt(ing)?\s+my\s*self\b/, /\bharm/, /\bliving\b/, /\balive\b/, /\btake\s+my\s+(own\s+)?life\b/],
+      aff: ["Your life is worth living.", "You are safe right now.", "You can get through this moment.", "You deserve care and support."] },
+    { id: "existence", re: [/\bexist/, /\bbelong/, /\bshould(n'?t| not)\s+be\s+here\b/, /\bwasn'?t\s+born\b/, /\bnever\s+been\s+born\b/, /\bburden\b/, /\bin\s+the\s+way\b/, /\bdon'?t\s+fit\b/, /\bunwanted\b/, /\bdisappear/],
+      aff: ["You deserve to be here.", "Your presence is wanted.", "You belong here.", "The world is better with you in it."] },
+    { id: "worth", re: [/\bworthless\b/, /\bnot\s+worth\b/, /\buseless\b/, /\bi('?m| am)\s+(a\s+)?nothing\b/, /\bhate\s+my\s*self\b/, /\bno\s+good\b/, /\bdon'?t\s+matter\b/, /\bnot\s+(good\s+)?enough\b/, /\bpointless\b/, /\bwaste\b/, /\binferior\b/, /\bless\s+than\b/, /\bpathetic\b/, /\bloser\b/],
+      aff: ["You are worthy.", "You matter.", "You are enough as you are.", "Your worth is not up for debate."] },
+    { id: "love", re: [/\bunlov/, /\blove[sd]?\b/, /\bunwanted\b/, /\bno\s*one\s+wants\b/, /\bnobody\s+wants\b/, /\bhate\s+me\b/, /\brejected\b/, /\bunattractive\b.*\bpartner\b/],
+      aff: ["You are loved.", "You are lovable.", "Love can reach you.", "You deserve kindness."] },
+    { id: "care", re: [/\bcares?\b/, /\balone\b/, /\blonely\b/, /\bno\s+friends\b/, /\bforgotten\b/, /\bignored\b/, /\binvisible\b/, /\bisolated\b/, /\bno\s*one\s+(would\s+)?(notice|miss)/, /\bnobody\s+(would\s+)?(notice|miss)/, /\bno\s*one\s+listens\b/, /\bnobody\s+listens\b/],
+      aff: ["People care about you.", "You are not alone.", "You are cared for.", "Connection is possible for you."] },
+    { id: "failure", re: [/\bfail/, /\bstupid\b/, /\bdumb\b/, /\bidiot\b/, /\bincompetent\b/, /\bcan'?t\s+do\s+anything\b/, /\bmess(ed)?\s+(it\s+|everything\s+)?up\b/, /\bscrew(ed)?\s+(it\s+|everything\s+)?up\b/, /\bruin/, /\bmistake/, /\bnever\s+get\s+(it\s+)?right\b/, /\bbad\s+at\b/, /\bdisappoint/, /\bnot\s+smart\b/, /\bincapable\b/],
+      aff: ["You are capable.", "You are learning and growing.", "Mistakes do not define you.", "You can try again."] },
+    { id: "fear", re: [/\bscared\b/, /\bafraid\b/, /\bfear/, /\banxi/, /\bpanic/, /\bworr/, /\bsomething\s+bad\b/, /\bcan'?t\s+cope\b/, /\bcan'?t\s+handle\b/, /\boverwhelm/, /\bterrif/, /\bnervous\b/, /\bunsafe\b/, /\bgoing\s+to\s+go\s+wrong\b/],
+      aff: ["You are calm.", "You are safe in this moment.", "You can handle what comes, one step at a time.", "Your breath steadies you."] },
+    { id: "shame", re: [/\bashamed\b/, /\bshame/, /\bembarrass/, /\bdisgust/, /\bbad\s+person\b/, /\bterrible\s+person\b/, /\bhorrible\b/, /\bguilt/, /\bmy\s+fault\b/, /\bdeserve\s+(this|bad|pain|to\s+suffer)\b/, /\bmonster\b/, /\bhate\s+my\s*self\b/, /\bevil\b/, /\bunforgivable\b/],
+      aff: ["You are a good person.", "You are worthy of forgiveness.", "You can be gentle with yourself.", "You are more than your worst moment."] },
+    { id: "hope", re: [/\bhopeless/, /\bno\s+hope\b/, /\bnever\s+(get|be)\s+better\b/, /\bnothing\s+(will\s+)?(ever\s+)?change/, /\bwhat'?s\s+the\s+point\b/, /\bno\s+point\b/, /\bgive\s+up\b/, /\bno\s+future\b/, /\bstuck\b/, /\btrapped\b/, /\bforever\b/, /\balways\s+be\s+like\s+this\b/],
+      aff: ["Things can change.", "Hope is allowed here.", "You are moving forward.", "Better days are possible for you."] },
+    { id: "body", re: [/\bugly\b/, /\bfat\b/, /\bgross\b/, /\bmy\s+body\b/, /\bhate\s+(how\s+i\s+look|my\s+(face|body|looks))/, /\bunattractive\b/, /\bhideous\b/, /\bdisgusting\b/, /\btoo\s+(skinny|thin|big)\b/, /\bweight\b/, /\blooks?\b/],
+      aff: ["Your body deserves kindness.", "You are worthy just as you are.", "You can treat yourself with care.", "Your value is more than how you look."] }
+  ];
+  var GENERIC = ["You are worthy.", "You are doing your best.", "You can be kind to yourself.", "You are allowed to rest."];
+
+  function norm(s) {
+    return String(s || "").toLowerCase().replace(/[\u2018\u2019\u02bc]/g, "'").replace(/\s+/g, " ").trim();
+  }
+  function isCrisis(text) {
+    var t = norm(text);
+    for (var i = 0; i < CRISIS.length; i++) if (CRISIS[i].test(t)) return true;
+    return false;
+  }
+  function themesFor(text) {
+    var t = norm(text), hits = [];
+    for (var i = 0; i < THEMES.length; i++) {
+      for (var j = 0; j < THEMES[i].re.length; j++) {
+        if (THEMES[i].re[j].test(t)) { hits.push(THEMES[i]); break; }
+      }
+    }
+    // "nobody loves me" also hints at care; "nobody cares" also hints at worth
+    return hits;
+  }
+  function reframeOne(text) {
+    var hits = themesFor(text), out = [], per;
+    if (!hits.length) out = GENERIC.slice(0, 3);
+    else {
+      per = hits.length === 1 ? 4 : hits.length === 2 ? 2 : 1;
+      if (hits.length >= 4) hits = hits.slice(0, 4);
+      for (var i = 0; i < hits.length; i++) {
+        for (var k = 0; k < per && k < hits[i].aff.length; k++) out.push(hits[i].aff[k]);
+      }
+      if (out.length < 2) out.push(GENERIC[0]);
+    }
+    return { thought: text, themes: hits.map(function (h) { return h.id; }), affirmations: out.slice(0, 4), crisis: isCrisis(text) };
+  }
+  function splitThoughts(raw) {
+    return String(raw || "").replace(/([.!?;])\s+/g, "$1\n").split(/\n+/).map(function (s) { return s.trim(); }).filter(function (s) { return /[a-z]/i.test(s); });
+  }
+  function reframeAll(raw) {
+    var thoughts = splitThoughts(raw), results = thoughts.map(reframeOne), seen = {}, list = [], crisis = false;
+    results.forEach(function (r) {
+      if (r.crisis) crisis = true;
+      r.affirmations.forEach(function (a) { if (!seen[a]) { seen[a] = 1; list.push(a); } });
+    });
+    return { results: results, affirmations: list, crisis: crisis };
+  }
+  return { reframeOne: reframeOne, reframeAll: reframeAll, isCrisis: isCrisis, splitThoughts: splitThoughts };
+})();
+
+  </script>
+  <script>
+(function () {
+  "use strict";
+  var $ = function (id) { return document.getElementById(id); };
+  var CARRIER = 400;
+
+  /* ---------- Steps 1 and 2: reframing ---------- */
+  var affList = $("affList");
+
+  function addLine(text, focus) {
+    var li = document.createElement("li");
+    var inp = document.createElement("input");
+    inp.type = "text";
+    inp.value = text || "";
+    inp.setAttribute("aria-label", "Kind words");
+    inp.maxLength = 140;
+    var x = document.createElement("button");
+    x.type = "button";
+    x.className = "x";
+    x.setAttribute("aria-label", "Remove this line");
+    x.textContent = "\u00d7";
+    x.addEventListener("click", function () { li.remove(); });
+    li.appendChild(inp);
+    li.appendChild(x);
+    affList.appendChild(li);
+    if (focus) inp.focus();
+  }
+
+  function currentAffirmations() {
+    var out = [];
+    affList.querySelectorAll("input").forEach(function (i) {
+      var v = i.value.trim();
+      if (v) out.push(v);
+    });
+    return out;
+  }
+
+  $("reframeBtn").addEventListener("click", function () {
+    var raw = $("thoughts").value;
+    var r = ReframeCore.reframeAll(raw);
+    $("safety").hidden = !r.crisis;
+    affList.textContent = "";
+    var src = $("sources");
+    src.textContent = "";
+    if (!r.results.length) {
+      $("results").hidden = true;
+      $("thoughts").focus();
+      return;
+    }
+    var p = document.createElement("p");
+    p.className = "from";
+    p.textContent = r.results.length === 1
+      ? "An answer to what you wrote:"
+      : "Answers to the " + r.results.length + " thoughts you wrote:";
+    src.appendChild(p);
+    r.affirmations.forEach(function (a) { addLine(a); });
+    $("results").hidden = false;
+    (r.crisis ? $("safety") : $("results")).scrollIntoView({ behavior: "smooth", block: "start" });
+  });
+  $("clearBtn").addEventListener("click", function () {
+    $("thoughts").value = "";
+    affList.textContent = "";
+    $("results").hidden = true;
+    $("safety").hidden = true;
+    $("thoughts").focus();
+  });
+  $("addBtn").addEventListener("click", function () { addLine("", true); });
+
+  /* ---------- Controls ---------- */
+  function radio(name) { return document.querySelector('input[name="' + name + '"]:checked').value; }
+  function pct(v) { return Math.round(v) + "%"; }
+  function fmt(s) { s = Math.max(0, Math.ceil(s)); return Math.floor(s / 60) + ":" + ("0" + (s % 60)).slice(-2); }
+
+  $("vol").addEventListener("input", function () { $("volOut").textContent = pct(this.value); applyLevels(); });
+  $("bed").addEventListener("input", function () { $("bedOut").textContent = pct(this.value); applyLevels(); });
+  $("voiceVol").addEventListener("input", function () { $("voiceOut").textContent = pct(this.value); });
+  document.querySelectorAll('input[name="mode"]').forEach(function (el) {
+    el.addEventListener("change", function () {
+      var v = this.value === "audible" ? 80 : 12;
+      $("voiceVol").value = v;
+      $("voiceOut").textContent = pct(v);
+    });
+  });
+  $("wordsOn").addEventListener("change", function () {
+    $("wordsOpts").disabled = !this.checked;
+    if (!this.checked) stopWords();
+    else if (S && S.running) startWords();
+  });
+  document.querySelectorAll('input[name="len"]').forEach(function (el) {
+    el.addEventListener("change", function () { if (!S) $("timeLeft").textContent = fmt(radio("len") * 60); });
+  });
+  document.querySelectorAll('input[name="beat"]').forEach(function (el) {
+    el.addEventListener("change", function () {
+      if (S && S.oscR) S.oscR.frequency.setTargetAtTime(CARRIER + Number(this.value), S.ctx.currentTime, 0.5);
+    });
+  });
+
+  /* ---------- Audio ---------- */
+  var ctx = null, S = null, tick = null, wakeLock = null;
+
+  function getCtx() {
+    if (!ctx) {
+      var AC = window.AudioContext || window.webkitAudioContext;
+      if (!AC) return null;
+      ctx = new AC();
+    }
+    return ctx;
+  }
+
+  function brownBuffer(c, seconds) {
+    var n = Math.floor(c.sampleRate * seconds), buf = c.createBuffer(2, n, c.sampleRate);
+    for (var ch = 0; ch < 2; ch++) {
+      var d = buf.getChannelData(ch), last = 0;
+      for (var i = 0; i < n; i++) {
+        last = (last + 0.02 * (Math.random() * 2 - 1)) / 1.02;
+        d[i] = last * 3.5;
+      }
+      // crossfade the loop seam
+      var k = Math.floor(c.sampleRate * 0.5);
+      for (var j = 0; j < k; j++) {
+        var t = j / k;
+        d[j] = d[j] * t + d[n - k + j] * (1 - t);
+      }
+    }
+    return buf;
+  }
+
+  function masterLevel() { var v = $("vol").value / 100; return v * v * 0.9; }
+  function bedLevel() { return ($("bed").value / 100) * 0.9; }
+
+  function applyLevels() {
+    if (!S) return;
+    var t = S.ctx.currentTime;
+    S.master.gain.setTargetAtTime(masterLevel(), t, 0.08);
+    S.bedGain.gain.setTargetAtTime(bedLevel(), t, 0.08);
+  }
+
+  function startSession() {
+    var c = getCtx();
+    if (!c) { $("nowSaying").textContent = "Sorry, this browser doesn't support Web Audio."; return; }
+    try { if (navigator.audioSession) navigator.audioSession.type = "playback"; } catch (e) {}
+    if (c.state !== "running") c.resume();
+    // iOS unlock: play one silent sample inside the tap
+    var sil = c.createBufferSource(); sil.buffer = c.createBuffer(1, 1, 22050); sil.connect(c.destination); sil.start(0);
+
+    var minutes = Number(radio("len")), beat = Number(radio("beat"));
+    var dur = minutes * 60, fadeIn = 20, fadeOut = 25, t0 = c.currentTime + 0.05;
+
+    var master = c.createGain(); master.gain.value = masterLevel(); master.connect(c.destination);
+    var env = c.createGain(); env.connect(master);
+    env.gain.setValueAtTime(0.0001, t0);
+    env.gain.exponentialRampToValueAtTime(1, t0 + fadeIn);
+    env.gain.setValueAtTime(1, t0 + dur - fadeOut);
+    env.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
+
+    var merger = c.createChannelMerger(2); merger.connect(env);
+    var oscL = c.createOscillator(), oscR = c.createOscillator();
+    oscL.type = oscR.type = "sine";
+    oscL.frequency.value = CARRIER; oscR.frequency.value = CARRIER + beat;
+    var gL = c.createGain(), gR = c.createGain(); gL.gain.value = gR.gain.value = 0.22;
+    oscL.connect(gL); gL.connect(merger, 0, 0);
+    oscR.connect(gR); gR.connect(merger, 0, 1);
+
+    var noise = c.createBufferSource(); noise.buffer = brownBuffer(c, 12); noise.loop = true;
+    var lp = c.createBiquadFilter(); lp.type = "lowpass"; lp.frequency.value = 1400;
+    var bedGain = c.createGain(); bedGain.gain.value = bedLevel();
+    noise.connect(lp); lp.connect(bedGain); bedGain.connect(env);
+
+    oscL.start(t0); oscR.start(t0); noise.start(t0);
+    var end = t0 + dur + 0.1;
+    oscL.stop(end); oscR.stop(end); noise.stop(end);
+
+    S = { ctx: c, master: master, env: env, oscL: oscL, oscR: oscR, noise: noise, bedGain: bedGain,
+          t0: t0, dur: dur, running: true, paused: false, wordIdx: 0, wordTimer: null };
+    noise.onended = function () { if (S && S.noise === noise) finish(true); };
+
+    $("playBtn").disabled = true; $("pauseBtn").disabled = false; $("stopBtn").disabled = false;
+    $("pauseBtn").textContent = "Pause";
+    $("nowSaying").textContent = "Eyes closed. Breathe slowly.";
+    if (navigator.wakeLock && navigator.wakeLock.request) {
+      navigator.wakeLock.request("screen").then(function (w) { wakeLock = w; }).catch(function () {});
+    }
+    tick = setInterval(updateTime, 500); updateTime();
+    if ($("wordsOn").checked) startWords(true);
+  }
+
+  function updateTime() {
+    if (!S) return;
+    var el = Math.min(S.dur, Math.max(0, S.ctx.currentTime - S.t0));
+    $("timeLeft").textContent = fmt(S.dur - el);
+    $("progress").style.width = (100 * el / S.dur) + "%";
+  }
+
+  function pauseResume() {
+    if (!S) return;
+    if (!S.paused) {
+      S.paused = true; S.running = false;
+      S.ctx.suspend();
+      stopWords();
+      $("pauseBtn").textContent = "Resume";
+      $("nowSaying").textContent = "Paused.";
+    } else {
+      S.paused = false; S.running = true;
+      S.ctx.resume();
+      $("pauseBtn").textContent = "Pause";
+      $("nowSaying").textContent = "Eyes closed. Breathe slowly.";
+      if ($("wordsOn").checked) startWords(true);
+    }
+  }
+
+  function finish(natural) {
+    if (!S) return;
+    var s = S; S = null;
+    stopWords();
+    clearInterval(tick);
+    var c = s.ctx, t = c.currentTime;
+    try {
+      s.master.gain.cancelScheduledValues(t);
+      s.master.gain.setValueAtTime(s.master.gain.value, t);
+      s.master.gain.linearRampToValueAtTime(0, t + 0.4);
+      s.oscL.stop(t + 0.45); s.oscR.stop(t + 0.45); s.noise.stop(t + 0.45);
+    } catch (e) {}
+    setTimeout(function () { try { s.master.disconnect(); } catch (e) {} }, 600);
+    if (c.state === "suspended") c.resume();
+    if (wakeLock) { try { wakeLock.release(); } catch (e) {} wakeLock = null; }
+    $("playBtn").disabled = false; $("pauseBtn").disabled = true; $("stopBtn").disabled = true;
+    $("pauseBtn").textContent = "Pause";
+    $("progress").style.width = natural ? "100%" : "0";
+    $("timeLeft").textContent = fmt(radio("len") * 60);
+    $("nowSaying").textContent = natural ? "Session complete. Take a minute before you get up." : "Stopped.";
+  }
+
+  /* ---------- Spoken words (Web Speech API) ---------- */
+  var synth = window.speechSynthesis || null, voice = null;
+  function pickVoice() {
+    if (!synth) return;
+    var vs = synth.getVoices() || [];
+    var lang = (navigator.language || "en").slice(0, 2);
+    var pref = vs.filter(function (v) { return v.lang && v.lang.slice(0, 2) === lang && v.localService; });
+    if (!pref.length) pref = vs.filter(function (v) { return v.lang && v.lang.slice(0, 2) === "en"; });
+    voice = pref[0] || null;
+  }
+  if (synth) { pickVoice(); if ("onvoiceschanged" in synth) synth.onvoiceschanged = pickVoice; }
+
+  function speakNext() {
+    if (!S || !S.running || !$("wordsOn").checked) return;
+    var list = currentAffirmations();
+    if (!list.length) { $("nowSaying").textContent = "Eyes closed. Breathe slowly."; return; }
+    var text = list[S.wordIdx % list.length];
+    S.wordIdx++;
+    var u = new SpeechSynthesisUtterance(text);
+    if (voice) u.voice = voice;
+    u.rate = 0.85; u.pitch = 0.95;
+    u.volume = Math.max(0.01, Math.min(1, $("voiceVol").value / 100));
+    var me = S;
+    u.onend = u.onerror = function () {
+      if (S !== me || !S.running) return;
+      S.wordTimer = setTimeout(speakNext, 2500);
+    };
+    $("nowSaying").textContent = radio("mode") === "audible" ? "\u201c" + text + "\u201d" : "Kind words, softly underneath.";
+    synth.speak(u);
+  }
+  function startWords(immediate) {
+    if (!synth || !S) {
+      if (!synth && S) $("nowSaying").textContent = "This browser can't speak the words, but the sound will still play.";
+      return;
+    }
+    stopWords();
+    // On iOS the first speak() must happen inside the tap, so start right away
+    if (immediate) speakNext(); else S.wordTimer = setTimeout(speakNext, 500);
+  }
+  function stopWords() {
+    if (S && S.wordTimer) { clearTimeout(S.wordTimer); S.wordTimer = null; }
+    if (synth) synth.cancel();
+  }
+
+  $("playBtn").addEventListener("click", startSession);
+  $("pauseBtn").addEventListener("click", pauseResume);
+  $("stopBtn").addEventListener("click", function () { finish(false); });
+  window.addEventListener("pagehide", function () { if (synth) synth.cancel(); });
+
+  /* ---------- WAV download (tones + noise only) ---------- */
+  $("dlBtn").addEventListener("click", function () {
+    var btn = this, status = $("dlStatus");
+    var minutes = Number(radio("len")), beat = Number(radio("beat"));
+    var sr = 22050, n = minutes * 60 * sr, chunk = sr * 10;
+    var bed = bedLevel(), tone = 0.22, fade = 20 * sr;
+    var dataBytes = n * 4, parts = [];
+    var h = new DataView(new ArrayBuffer(44));
+    function str(o, s) { for (var i = 0; i < s.length; i++) h.setUint8(o + i, s.charCodeAt(i)); }
+    str(0, "RIFF"); h.setUint32(4, 36 + dataBytes, true); str(8, "WAVE"); str(12, "fmt ");
+    h.setUint32(16, 16, true); h.setUint16(20, 1, true); h.setUint16(22, 2, true);
+    h.setUint32(24, sr, true); h.setUint32(28, sr * 4, true); h.setUint16(32, 4, true); h.setUint16(34, 16, true);
+    str(36, "data"); h.setUint32(40, dataBytes, true);
+    parts.push(h.buffer);
+    var wL = 2 * Math.PI * CARRIER / sr, wR = 2 * Math.PI * (CARRIER + beat) / sr;
+    var bL = 0, bR = 0, lpL = 0, lpR = 0, a = 0.33, i0 = 0;
+    btn.disabled = true;
+    function step() {
+      var m = Math.min(chunk, n - i0), out = new Int16Array(m * 2);
+      for (var j = 0; j < m; j++) {
+        var i = i0 + j;
+        var g = i < fade ? i / fade : (i > n - fade ? (n - i) / fade : 1);
+        bL = (bL + 0.02 * (Math.random() * 2 - 1)) / 1.02; lpL += a * (bL - lpL);
+        bR = (bR + 0.02 * (Math.random() * 2 - 1)) / 1.02; lpR += a * (bR - lpR);
+        var L = (tone * Math.sin(wL * i) + bed * lpL * 3.5) * g * 0.8;
+        var R = (tone * Math.sin(wR * i) + bed * lpR * 3.5) * g * 0.8;
+        out[2 * j] = Math.max(-1, Math.min(1, L)) * 32767;
+        out[2 * j + 1] = Math.max(-1, Math.min(1, R)) * 32767;
+      }
+      parts.push(out.buffer);
+      i0 += m;
+      status.textContent = "Making file\u2026 " + Math.round(100 * i0 / n) + "%";
+      if (i0 < n) { setTimeout(step, 0); return; }
+      var blob = new Blob(parts, { type: "audio/wav" });
+      var url = URL.createObjectURL(blob), link = document.createElement("a");
+      link.href = url; link.download = "reframe-" + minutes + "min-" + beat + "hz.wav";
+      document.body.appendChild(link); link.click(); link.remove();
+      setTimeout(function () { URL.revokeObjectURL(url); }, 60000);
+      status.textContent = "Done (" + Math.round(blob.size / 1048576) + " MB). Spoken words aren't included.";
+      btn.disabled = false;
+    }
+    setTimeout(step, 30);
+  });
+})();
+  </script>
+</body>
+</html>
